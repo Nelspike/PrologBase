@@ -1,0 +1,1014 @@
+/**
+ * JavaCC template file created by SF JavaCC plugin 1.5.17+ wizard for JavaCC 1.5.0+
+ * Authors: Nelson Oliveira, João Santos, Margarida Pereira, Ana Ferreira
+ * Grupo 2A - Tema 11 -> ACME
+ */
+
+options
+{
+  JDK_VERSION = "1.5";
+  static = false;
+  MULTI = true;
+}
+
+PARSER_BEGIN(acmeParser)
+
+import java.io.*;
+import java.util.*;
+
+public class acmeParser
+{
+	public static SymbolTable table;
+	public static ArrayList<Component> components;
+	public static ArrayList<Connector> connectors;
+	public static ArrayList<Attachment> attachments;
+	public static boolean isSystem;
+	private static char keyPressed;
+	private static Stack<SymbolTable> tableStack;
+	private static ArrayList<String> semanticsErrors;
+
+	private static void runComponent(String filename)
+	{	    table = new SymbolTable(500);
+	    semanticsErrors = new ArrayList<String>();
+	    tableStack = new Stack<SymbolTable>();
+	    
+	    components = new ArrayList<Component>();
+	    connectors = new ArrayList<Connector>();
+	    attachments = new ArrayList<Attachment>();
+	    
+	    acmeParser parser = null;
+	    try
+	    {
+	      parser = new acmeParser(new FileInputStream(filename));
+	    }
+	    catch(Exception e)
+	    {
+			e.printStackTrace();
+	    }
+	
+		SimpleNode root = null;
+		
+		try
+		{		  root = parser.parse_AcmeDesign();
+		}
+		catch(ParseException pE)
+		{			System.out.println(pE.getMessage());
+
+			System.out.println("A sintatic error has been found. Please correct your file!\n");
+			return;
+		}
+
+		if(semanticsErrors.size() > 0)
+		{
+			for(int i = 0; i < semanticsErrors.size(); i++)
+				System.out.println(semanticsErrors.get(i));
+
+			return;
+		}
+		else
+		{
+			root.dump("");
+			System.out.println();
+			new TreeVerifier(root);
+			System.out.println("Success!\n");
+
+			int indexOfDot = filename.indexOf('.');
+			String realName = filename.substring(0, indexOfDot);
+		
+			if(isSystem)
+			{
+				new DotGenerator(components, connectors, attachments, realName+".dot");
+				
+	            String[] cmdarray = {"dot/dot.exe",  "-Tpng",  realName+".dot", "-o", realName+".png"};
+	            
+	            try {
+	                    Runtime.getRuntime().exec(cmdarray);
+	            } catch (IOException e) {
+	                    System.out.println("Cannot execute DOT generation command!");
+	                    e.printStackTrace();
+	            }
+			}
+		}
+	}
+
+	private static void waitForEnter()
+    {
+            System.out.println("\nPress ONLY Enter to Continue...");
+            pressKey();
+            while(keyPressed != 13)
+            {
+                    System.out.println("\nPress ONLY Enter to Continue...");
+                    pressKey();     
+            }
+    }
+
+    private static void pressKey()
+    {
+            try {
+                    keyPressed = (char) new InputStreamReader(System.in).read ();
+            } catch (IOException e) {
+                    System.out.println("Cannot read from Keyboard");
+            }
+    }
+
+	private static void clearScreen()
+	{		System.out.println('\n');
+		System.out.println('\n');
+		System.out.println('\n');
+		System.out.println('\n');
+		System.out.println('\n');
+		System.out.println('\n');
+		System.out.println('\n');
+		System.out.println('\n');
+		System.out.println('\n');
+	}
+  
+  public static void main(String args []) throws ParseException
+  {
+	while(true)
+	{ 
+		System.out.println("ACME - Dotty Compiler Generator\n");
+		System.out.println("1 - Run First Test (Graph Rep) - Testsuite");
+		System.out.println("2 - Run Second Test (Graph Rep) - Example");
+		System.out.println("3 - Run Third Test (Syntatic Error) - Example");
+		System.out.println("4 - Run Fourth Test - Example");
+		System.out.println("5 - Run Fifth Test (Graph Rep)");
+		System.out.println("6 - Run Sixth Test - Testsuite");
+		System.out.println("7 - Run Seventh Test (Syntatic Error) - Testsuite");
+		System.out.println("8 - Run Eighth Test (Semantic Error) - Testsuite");
+		System.out.println("9 - Exit Client\n");
+
+		System.out.print("Choose one: ");
+		Scanner input = new Scanner(System.in);
+		int choice = Integer.parseInt(input.nextLine());
+
+		switch(choice)
+		{			case 1:
+				runComponent("testsuite/file1.acme");
+				break;
+			case 2:
+				runComponent("examples/file2.acme");
+				break;
+			case 3:
+				runComponent("examples/file3.acme");
+				break;
+			case 4:
+				runComponent("examples/file4.acme");
+				break;
+			case 5:
+				runComponent("examples/file5.acme");
+				break;
+			case 6:
+				runComponent("testsuite/file6.acme");
+				break;
+			case 7:
+				runComponent("testsuite/file7.acme");
+				break;
+			case 8:
+				runComponent("testsuite/file8.acme");
+				break;
+			case 9:
+				System.exit(0);
+				break;
+		}
+
+		waitForEnter();
+		clearScreen();
+	}
+  }
+}
+
+PARSER_END(acmeParser)
+
+SKIP :
+{
+  " "
+| "\r"
+| "\t"
+| "\n"
+}
+
+TOKEN :
+{
+  <AND: ("and") | "&" | "&&" >
+|<BRACKET_OPEN: "{" >
+|<BRACKET_CLOSE: "}" >
+|<ATTACHMENT: "Attachment" >
+|<ATTACHMENTS: "Attachments" >
+|<BANG: "!" >
+|<BOOLEAN: "Boolean" | "boolean">
+|<COMPONENT: "Component" >
+|<CONNECTOR: "Connector" >
+|<ENUM: "enum" | "Enum">
+|<EQ:  "==">
+|<EXISTS: "exists">
+|<#EXPONENT: ["e","E"] (["+","-"])? (["0"-"9"])+ >
+|<EXTENDED: "extended">
+|<EXTENDS: "extends" >
+|<FALSE: "false">
+|<FAMILY: "Family">
+|<FLOAT: "Float" | "float" >
+|<FORALL: "forall">
+|<GE: ">=" >
+|<GROUP: "Group" >
+|<IFF: "iff">
+|<IMPLIES: ("implies")>
+|<IMPORT: ("import") >
+|<IN: "in" >
+|<INT: "int" >
+|<INVARIANT: ("invariant") >
+|<LE: "<=" >
+|<MEMBERS: ("members") >
+|<MINUS: ("-") >
+|<NE: "!=">
+|<NEW: ("new") >
+|<OR: ("or") >
+|<PLUS: ("+") >
+|<PORT: "Port" >
+|<PORTS: "Ports" >
+|<PROPERTIES: "Properties" >
+|<PROPERTY: "Property" >
+|<RECORD: "Record">
+|<REM: "%">
+|<REPRESENTATION: "Representation">
+|<REPRESENTATIONS: "Representations">
+|<ROLE: "Role">
+|<ROLES: "Roles">
+|<SELECT: "select" >
+|<SEQUENCE: "Sequence" >
+|<SET: "set">
+|<SLASH: "/">
+|<STAR: "*">
+|<STRING: "String" >
+|<STYLE: "Style">
+|<SYSTEM: "System">
+|<TRUE: "true">
+|<UNIQUE: "unique">
+|<TYPE: ("Type")>
+|<WITH: "with">
+|<ANALYSIS: "analysis">
+|<ANY: "any">
+|<ATTACHEDPORTS:  "attachedports">
+|<ATTACHEDROLES: "attachedroles" >
+|<COLLECT: "collect" >
+|<COMPONENTS: "components">
+|<DESIGN: "design" >
+|<PROPBEGIN: "propbegin">
+|<PROPEND: "propend">
+|<HEURISTIC: "heuristic">
+|<SET_DECLARE: "set_declare">
+|<CONNECTORS: "connectors" >
+|<BINDINGS: "bindings" >
+|<EXTERNAL: "external" >
+|<TO: "to" >
+|<IDENTIFIER: (["a"-"z", "A"-"Z"]) (["a"-"z", "A"-"Z", "0"-"9", "_", "-"])*>
+|<ELEMENT: (<IDENTIFIER> ("."<IDENTIFIER>)*) >
+| <INTEGER_LITERAL: <DECIMAL_LITERAL> (["l","L"])? | <HEX_LITERAL> (["l","L"])? | <OCTAL_LITERAL> (["l","L"])?>
+| <#DECIMAL_LITERAL: ["1"-"9"] (["0"-"9"])*>
+| <#HEX_LITERAL: "0" ["x","X"] (["0"-"9","a"-"f","A"-"F"])+>
+| <#OCTAL_LITERAL: "0" (["0"-"7"])*>
+| <FLOATING_POINT_LITERAL: <DECIMAL_FLOATING_POINT_LITERAL> | <HEXADECIMAL_FLOATING_POINT_LITERAL>>
+| <#DECIMAL_FLOATING_POINT_LITERAL: (["0"-"9"])+ "." (["0"-"9"])* (<DECIMAL_EXPONENT>)? (["f","F","d","D"])? | "." (["0"-"9"])+ (<DECIMAL_EXPONENT>)? (["f","F","d","D"])? | (["0"-"9"])+ <DECIMAL_EXPONENT> (["f","F","d","D"])? | (["0"-"9"])+ (<DECIMAL_EXPONENT>)? ["f","F","d","D"]>
+| <#DECIMAL_EXPONENT: ["e","E"] (["+","-"])? (["0"-"9"])+>
+| <#HEXADECIMAL_FLOATING_POINT_LITERAL: "0" ["x","X"] (["0"-"9","a"-"f","A"-"F"])+ (".")? <HEXADECIMAL_EXPONENT> (["f","F","d","D"])? | "0" ["x","X"] (["0"-"9","a"-"f","A"-"F"])* "." (["0"-"9","a"-"f","A"-"F"])+ <HEXADECIMAL_EXPONENT> (["f","F","d","D"])?>
+| <#HEXADECIMAL_EXPONENT: ["p","P"] (["+","-"])? (["0"-"9"])+>
+| <CHARACTER_LITERAL: "\'" (~["\'","\\","\n","\r"] | "\\" (["n","t","b","r","f","\\","\'","\""] | ["0"-"7"] (["0"-"7"])? | ["0"-"3"] ["0"-"7"] ["0"-"7"])) "\'">
+| <STRING_LITERAL: "\"" (~["\"","\\","\n","\r"] | "\\" (["n","t","b","r","f","\\","\'","\""] | ["0"-"7"] (["0"-"7"])? | ["0"-"3"] ["0"-"7"] ["0"-"7"]))* "\"">
+}
+
+void Filename():{Token t, s;}
+{
+    ( "$" | "%" )? t = <IDENTIFIER> {jjtThis.addToken(t.image);}
+    ( ( ( "." | ":" | "-" | "+" | "\\" | "\\\\" | "/" | "$" | "%" ) )+ s = <IDENTIFIER> {jjtThis.addToken(s.image);})*
+}
+
+SimpleNode parse_AcmeDesign():{Token t, u;}
+{
+        ( u = <IMPORT> {jjtThis.addToken(u.image);}
+        ( Filename() ";" |
+        	t = <STRING_LITERAL> {jjtThis.addToken(t.image); String s = table.addSymbol(t.image, u.image); if(!s.equals("")) semanticsErrors.add(s);}
+         ";" ) )*
+    ( LOOKAHEAD(2) TypeDeclaration() |
+                                    FamilyDeclaration() |
+                                    DesignAnalysisDeclaration() |
+                                    PropertyDeclaration(-1, "") |
+                                    PropertiesBlock(-1, "") |
+                                    SystemDeclaration() )* <EOF>
+   {
+      return jjtThis;
+    }
+}
+    
+void FamilyDeclaration():{Token t, s, u, v;}
+{
+    ( t = <FAMILY> {jjtThis.addToken(t.image);} | t = <STYLE> {jjtThis.addToken(t.image);} )
+    s = <IDENTIFIER> {jjtThis.addToken(s.image);}
+    ( ";"
+            | ( "=" FamilyBody() ( ";" )? )
+            | ( u = <EXTENDS> {jjtThis.addToken(u.image);} lookup_TypeByName()
+                    ( "," lookup_TypeByName())* v = <WITH> {jjtThis.addToken(v.image);} FamilyBody() ( ";" )? ) )
+
+}
+
+void FamilyBody():{Token t, s;}
+{
+           LOOKAHEAD(2) t = "{" {jjtThis.addToken(t.image);}  s = "}" {jjtThis.addToken(s.image);}
+              | t = "{"              {jjtThis.addToken(t.image);}
+              (LOOKAHEAD(2) TypeDeclaration()
+              				| SystemStructure() )+ s = "}" {jjtThis.addToken(s.image);}
+}
+
+void TypeDeclaration():{}
+{
+    ElementTypeDeclaration() | PropertyTypeDeclaration()
+}
+    
+void ElementTypeDeclaration():{Token t, s;}
+{
+        (t = <EXTENDS> {jjtThis.addToken(t.image);} lookup_TypeByName()
+        	( "," lookup_TypeByName())* s = <WITH> {jjtThis.addToken(s.image);}
+                (LOOKAHEAD(3) parse_ElementProtoTypeDescription()
+                | parse_descriptions(-1)) ( ";" )? )
+        | ElementProtoTypeDeclaration()        
+    | ComponentTypeDeclaration(-1)        
+    | GroupTypeDeclaration()        
+    | ConnectorTypeDeclaration()        
+    | PortTypeDeclaration()        
+    | RoleTypeDeclaration()
+}
+
+void parse_descriptions(int index):{Token t, s, v, u;}
+{
+   (t = <NEW> {jjtThis.addToken(t.image);} lookup_TypeByName() ("," lookup_TypeByName() )*
+  | t = <BRACKET_OPEN> {jjtThis.addToken(t.image);}
+  		( parse_GroupDescription()
+          | LOOKAHEAD(3) parse_PropertiesChoice() )* s = <BRACKET_CLOSE> {jjtThis.addToken(s.image);})
+        ( v = <EXTENDED> {jjtThis.addToken(v.image);} u = <WITH> {jjtThis.addToken(u.image);}parse_descriptions(index))?                  
+}
+
+void parse_descriptionsConn(int index):{Token t, s, v, u;}
+{
+   (t = <NEW> {jjtThis.addToken(t.image);} lookup_TypeByName() ("," lookup_TypeByName() )*
+  | t = <BRACKET_OPEN> {jjtThis.addToken(t.image);}
+  		(LOOKAHEAD(3) parse_InnerRoleDescription(index))* s = <BRACKET_CLOSE> {jjtThis.addToken(s.image);})
+        ( v = <EXTENDED> {jjtThis.addToken(v.image);} u = <WITH> {jjtThis.addToken(u.image);}parse_descriptionsConn(index))?                  
+}
+
+void parse_descriptionsComp(int index):{Token t, s, v, u;}
+{
+   (t = <NEW> {jjtThis.addToken(t.image);} lookup_TypeByName() ("," lookup_TypeByName() )*
+  | t = <BRACKET_OPEN> {jjtThis.addToken(t.image);}
+  		(LOOKAHEAD(3) parse_InnerPortDescription(index))* s = <BRACKET_CLOSE> {jjtThis.addToken(s.image);})
+        ( v = <EXTENDED> {jjtThis.addToken(v.image);} u = <WITH> {jjtThis.addToken(u.image);}parse_descriptionsComp(index))?                  
+}
+   
+void ElementProtoTypeDeclaration():{Token t, s, u;}
+{
+    t = <ELEMENT> {jjtThis.addToken(t.image);}
+    s = <TYPE> {jjtThis.addToken(s.image);}
+    u = <IDENTIFIER> {jjtThis.addToken(u.image);}
+    ( "=" parse_ElementProtoTypeDescription() ( ";" )? | ";" )
+}
+    
+void ComponentTypeDeclaration(int index):{Token t, s, u;}
+{
+    t = <COMPONENT> {jjtThis.addToken(t.image);} s = <TYPE> {jjtThis.addToken(s.image);} u = <IDENTIFIER> {jjtThis.addToken(u.image);}
+    ( "=" (("{" (parse_ComponentDescription(index))* "}") | parse_ComponentDescription(index)) ( ";" )? | ";" )
+}        
+    
+void GroupTypeDeclaration():{Token t, s, u;}
+{
+    t = <GROUP> {jjtThis.addToken(t.image);} s = <TYPE> {jjtThis.addToken(s.image);} u = <IDENTIFIER> {jjtThis.addToken(u.image);}
+    ( "=" (("{" (parse_GroupDescription())* "}") | parse_GroupDescription()) ( ";" )? | ";" )
+}            
+    
+void ConnectorTypeDeclaration():{Token t, s, u;}
+{
+    t = <CONNECTOR> {jjtThis.addToken(t.image);} s = <TYPE> {jjtThis.addToken(s.image);} u = <IDENTIFIER> {jjtThis.addToken(u.image);}
+    ( "=" (("{" (parse_ConnectorDescription(-1))* "}") | parse_ConnectorDescription(-1)) ( ";" )? | ";" )
+}
+
+void PortTypeDeclaration():{Token t, s, u, y, x, z;}
+{
+    t = <PORT> {jjtThis.addToken(t.image);} s = <TYPE> {jjtThis.addToken(s.image);} u = <IDENTIFIER> {jjtThis.addToken(u.image);}
+    ( "=" (parse_descriptions(-1))* ( ";" )?
+            | y = <EXTENDS> {jjtThis.addToken(y.image);} x = <IDENTIFIER> {jjtThis.addToken(x.image);} z = <WITH> {jjtThis.addToken(z.image);} (parse_descriptions(-1))* ( ";" )
+            | ";" )
+}      
+     
+void RoleTypeDeclaration():{Token t, s, u;}
+{
+    t = <ROLE> {jjtThis.addToken(t.image);} s = <TYPE> {jjtThis.addToken(s.image);} u = <IDENTIFIER> {jjtThis.addToken(u.image);} ( "=" parse_descriptions(-1) ( ";" )? | ";" )
+}
+      
+void lookup_TypeByName():{Token t;}
+{
+    LOOKAHEAD(2) ( t = <IDENTIFIER> {jjtThis.addToken(t.image);} "." ) | t = <IDENTIFIER> {jjtThis.addToken(t.image);} 
+}
+ 
+void lookup_arbitraryTypeByName():{Token t;}
+{
+    ( PropertyTypeDescription()
+    | t = <SYSTEM> {jjtThis.addToken(t.image);}
+    | t = <COMPONENT> {jjtThis.addToken(t.image);}
+    | t = <GROUP> {jjtThis.addToken(t.image);}
+    | t = <CONNECTOR> {jjtThis.addToken(t.image);}
+    | t = <PORT> {jjtThis.addToken(t.image);}
+    | t = <ROLE> {jjtThis.addToken(t.image);}
+    | t = <PROPERTY> {jjtThis.addToken(t.image);}
+    | t = <REPRESENTATION> {jjtThis.addToken(t.image);} )    
+}
+          
+void SystemDeclaration():{Token t, s;}
+{
+    t = <SYSTEM> {jjtThis.addToken(t.image); isSystem = true;}
+    s = <IDENTIFIER> {jjtThis.addToken(s.image); table.addSymbol(s.image, t.image);}
+    ( ":" lookup_TypeByName() ( "," lookup_TypeByName())* )?
+    ( "=" SystemBody() ( ";" )? | ";" )
+}      
+      
+void SystemBody():{Token t, s;}
+{
+    ( t = <NEW> {jjtThis.addToken(t.image);}
+    	lookup_TypeByName() ( "," lookup_TypeByName())*
+    | "{" ( SystemStructure() )* "}" )
+    	 ( t = <EXTENDED>  {jjtThis.addToken(t.image);}
+    	 	 s = <WITH>  {jjtThis.addToken(s.image);} SystemBody() )?
+}    
+      
+void SystemStructure():{}
+{
+    ComponentDeclaration()   
+    | ComponentsBlock()        
+    | GroupDeclaration()        
+    | ConnectorDeclaration()        
+    | ConnectorsBlock()        
+    | PortDeclaration(-1)        
+    | PortsBlock(-1)        
+    | RoleDeclaration(-1)        
+    | RolesBlock(-1)        
+    | PropertyDeclaration(-1, "")
+    | PropertiesBlock(-1, "")        
+    | AttachmentsDeclaration()        
+    | RepresentationDeclaration()        
+    | DesignAnalysisDeclaration()
+}       
+    
+void  parse_ElementProtoTypeDescription():{}
+{
+    "{" ( PropertyDeclaration(-1, "") | PropertiesBlock(-1, "") | RepresentationDeclaration() )* "}"
+}
+    
+void GroupDeclaration():{Token t, s, x, y, z, a;}
+{
+    t = <GROUP> {jjtThis.addToken(t.image);} s = <IDENTIFIER> {jjtThis.addToken(s.image);}
+    ( ":" lookup_TypeByName() ( "," lookup_TypeByName())* )?
+    ( "="
+        ( x = <NEW> {jjtThis.addToken(x.image);} y = <IDENTIFIER> {jjtThis.addToken(y.image);} z = <EXTENDED> {jjtThis.addToken(z.image);} a = <WITH> {jjtThis.addToken(a.image);} )?
+    parse_GroupDescription() ";" | ";" )
+}    
+    
+void parse_GroupDescription():{}
+{
+    MembersBlock()
+}      
+    
+void ComponentDeclaration():{Token t, s, u, v, x, y, z, a; int index = 0;}
+{
+
+    t = <COMPONENT> {jjtThis.addToken(t.image);}
+    s = <IDENTIFIER> {jjtThis.addToken(s.image); String st = table.addSymbol(s.image, t.image); if(!st.equals("")) {semanticsErrors.add(st);}
+    	SymbolTable copy = new SymbolTable(table.getStrings()); tableStack.push(copy);}
+    {
+        Component comp = new Component(s.image);
+	    components.add(comp);
+	    index = components.size()-1;
+	 }
+    ( ":" lookup_TypeByName() ( "," lookup_TypeByName() )* )?
+    ( "="
+        ( x = <NEW> {jjtThis.addToken(x.image);}
+          y = <IDENTIFIER> {jjtThis.addToken(y.image);}
+          z = <EXTENDED> {jjtThis.addToken(z.image);}
+          a = <WITH> {jjtThis.addToken(a.image);} )?
+    u = <BRACKET_OPEN> {jjtThis.addToken(u.image);}
+    (parse_ComponentDescription(index))*
+    v = <BRACKET_CLOSE> {jjtThis.addToken(v.image); table = new SymbolTable(tableStack.pop().getStrings());} ";" | ";" )
+}        
+    
+void ComponentsBlock():{Token t, s, u, v, x, y; int index = 0;}
+{
+    t = <COMPONENTS> {jjtThis.addToken(t.image);} x = "{" {jjtThis.addToken(x.image);}
+    ( s = <IDENTIFIER>
+    {jjtThis.addToken(s.image); Component c = new Component(s.image); components.add(c); index = components.size()-1;}
+    ( ":" lookup_TypeByName() ( "," lookup_TypeByName())* )?
+    ( "=" u = <BRACKET_OPEN> {jjtThis.addToken(u.image);}(parse_ComponentDescription(index))* v =<BRACKET_CLOSE> {jjtThis.addToken(v.image);}";" | ";" ) )* y = "}" {jjtThis.addToken(y.image);} ( ";" )?
+}
+    
+void parse_ComponentDescription(int index):{}
+{
+        (PortDeclaration(index)
+	        | PortsBlock(index)
+	        | PropertiesBlock(index, "Comp")
+	        | PropertyDeclaration(index, "Comp"))
+}
+
+void parse_InnerPortDescription(int index):{}
+{
+        (PropertiesBlock(index, "Port")
+	        | PropertyDeclaration(index, "Port"))
+}
+    
+void ConnectorDeclaration():{Token t, s, u, v, x, y, z, a; int index = 0;}
+{
+    t = <CONNECTOR> {jjtThis.addToken(t.image);}
+    s = <IDENTIFIER> {jjtThis.addToken(s.image); String st = table.addSymbol(s.image, t.image); if(!st.equals("")) semanticsErrors.add(st);
+    				SymbolTable copy = new SymbolTable(table.getStrings()); tableStack.push(copy); }
+    {Connector conn = new Connector(s.image); connectors.add(conn); index = connectors.size()-1;}
+    ( ":"lookup_TypeByName() ( "," lookup_TypeByName())* )?
+    ( "="
+        ( x = <NEW> {jjtThis.addToken(x.image);}
+          y = <IDENTIFIER> {jjtThis.addToken(y.image);}
+          z = <EXTENDED> {jjtThis.addToken(z.image);}
+          a = <WITH> {jjtThis.addToken(a.image);} )?
+    u = <BRACKET_OPEN> {jjtThis.addToken(u.image);} (parse_ConnectorDescription(index))* v = <BRACKET_CLOSE> {jjtThis.addToken(v.image); table = new SymbolTable(tableStack.pop().getStrings());} ";" | ";" )
+}         
+    
+void ConnectorsBlock():{Token t, s, u, v; int index = 0;}
+{
+    t = <CONNECTORS> {jjtThis.addToken(t.image);}
+    "{"
+    ( s = <IDENTIFIER> {jjtThis.addToken(s.image); connectors.add(new Connector(s.image)); index = connectors.size()-1;}
+    ( ":" lookup_TypeByName() ( "," lookup_TypeByName())* )?
+     ( "=" u = <BRACKET_OPEN> {jjtThis.addToken(u.image);}
+     (parse_ConnectorDescription(index))* v = <BRACKET_CLOSE> {jjtThis.addToken(v.image);} ";" | ";" ) )*
+     "}" ( ";" )?
+}         
+    
+void parse_ConnectorDescription(int index):{}
+{
+    ( RoleDeclaration(index)        
+    | RolesBlock(index)| PropertiesBlock(index, "Conn") | PropertyDeclaration(index, "Conn"))
+}
+
+void parse_InnerRoleDescription(int index):{}
+{
+    ( PropertiesBlock(index, "Role") | PropertyDeclaration(index, "Role"))
+}
+
+void PortDeclaration(int index):{Token t, s;}
+{
+   t = <PORT> {jjtThis.addToken(t.image);} s = <IDENTIFIER> {jjtThis.addToken(s.image);
+   if(index != -1) {components.get(index).addProperty(t.image, s.image+"_"+components.get(index).getName()); components.get(index).addValue("");}
+    String st = table.addSymbol(s.image, t.image); if(!st.equals("")) semanticsErrors.add(st);
+    SymbolTable copy = new SymbolTable(table.getStrings()); tableStack.push(copy);}   
+   (( ":" lookup_TypeByName() ( "," lookup_TypeByName() )* )?
+   ( "=" parse_descriptionsComp(index))?   {table = new SymbolTable(tableStack.pop().getStrings());} ";" )
+}
+
+void PortsBlock(int index):{Token t, s, x, y;}
+{
+    t = <PORTS> {jjtThis.addToken(t.image);}  x = "{" {jjtThis.addToken(x.image);}
+    (
+      s = <IDENTIFIER> {jjtThis.addToken(s.image); components.get(index).addProperty("Port", s.image+components.get(index).getName());}
+      ( ","
+              |( ":" lookup_TypeByName() ( "," lookup_TypeByName() )* )?
+                      ( "=" parse_descriptions(index) ";" | ";" ) )?
+    )*
+    y = "}" {jjtThis.addToken(y.image);}";"
+}  
+ 
+void parse_PortRoleDescription():{}
+{
+    ( parse_PropertiesChoice() )*
+}
+ 
+void RoleDeclaration(int index):{Token t, s;}
+{
+    t = <ROLE> {jjtThis.addToken(t.image);} s = <IDENTIFIER> {jjtThis.addToken(s.image);}
+    {if(index != -1) {connectors.get(index).addProperty(t.image, s.image); connectors.get(index).addValue("");}
+     String st = table.addSymbol(s.image, t.image); if(!st.equals("")) semanticsErrors.add(st);
+     SymbolTable copy = new SymbolTable(table.getStrings()); tableStack.push(copy);}
+    ( ":" lookup_TypeByName() ( "," lookup_TypeByName() )* )?
+    ( "=" parse_descriptionsConn(index) {table = new SymbolTable(tableStack.pop().getStrings());} ";" | ";" )
+}
+ 
+void MembersBlock():{Token t, x, y;}
+{
+    t = <MEMBERS> {jjtThis.addToken(t.image);} x = "{" {jjtThis.addToken(x.image);}( QualifiedReference() ( ";" ) )* y = "}" {jjtThis.addToken(y.image);}";"
+}
+ 
+void QualifiedReference ():{Token t, s;}
+{
+    t = <IDENTIFIER> {jjtThis.addToken(t.image);} ( ( "." s = <IDENTIFIER> {jjtThis.addToken(s.image);} ) )*
+}
+ 
+void RolesBlock(int index):{Token t, s;}
+{
+    t = <ROLES> {jjtThis.addToken(t.image);} "{"
+    (
+      s = <IDENTIFIER> {jjtThis.addToken(s.image); if(index != -1) connectors.get(index).addProperty("Role", s.image);}
+      ( ","
+              |( ":" lookup_TypeByName() ( "," lookup_TypeByName() )* )?
+                      ( "=" parse_descriptions(-1) ";" | ";" ) )?
+    )*
+    "}" ";"
+}
+
+void parse_PropertiesChoice(): {}
+{
+        PropertyDeclaration(-1, "") | PropertiesBlock(-1, "") | RepresentationDeclaration() | parse_DesignRule()
+}     
+ 
+void AttachmentsDeclaration():{Token t, s, u, v;}
+{ 
+    (
+      ( t = <ATTACHMENTS> {jjtThis.addToken(t.image);} ":" "{"
+              (
+                 s = <ELEMENT>{jjtThis.addToken(s.image);}  u = <TO> {jjtThis.addToken(u.image);} v = <ELEMENT> {jjtThis.addToken(v.image);}
+				{					Attachment a = new Attachment();
+					String[] from = s.image.split("\\.");
+					a.setFromPackage(from[0]);
+					a.setFromPort(from[1]);
+					String[] to = v.image.split("\\.");
+					a.setToPackage(to[0]);
+					a.setToPort(to[1]);
+					attachments.add(a);
+				}
+                 ( "{" ( PropertyDeclaration(-1, "") | PropertiesBlock(-1, "") ) * "}" )? ";"
+              )*
+              "}" ( ";" )?
+       )
+      |( t = <ATTACHMENT> {jjtThis.addToken(t.image);}
+                s = <ELEMENT> {jjtThis.addToken(s.image);}  u = <TO> {jjtThis.addToken(u.image);} v = <ELEMENT> {jjtThis.addToken(v.image);}
+				{
+					Attachment a = new Attachment();
+					String[] from = s.image.split("\\.");
+					a.setFromPackage(from[0]);
+					a.setFromPort(from[1]);
+					String[] to = v.image.split("\\.");
+					a.setToPackage(to[0]);
+					a.setToPort(to[1]);
+					attachments.add(a);
+				}
+                  ( "{" ( PropertyDeclaration(-1, "") | PropertiesBlock(-1, "") )*
+                  "}" )? ";" )
+     )
+}
+
+void PropertyDeclaration(int index, String type):{Token t;}
+{
+    t = <PROPERTY> {jjtThis.addToken(t.image);} parse_PropertyDescription(index, type) ";"
+}
+
+void PropertiesBlock(int index, String type):{Token t;}
+{
+    t = <PROPERTIES> {jjtThis.addToken(t.image);} "{"
+    ( parse_PropertyDescription(index, type) ";"
+    ( parse_PropertyDescription(index, type)  ";" )* )
+    "}" ";"
+}
+
+void parse_PropertyDescription(int index, String type):{Token t, s, u, v;}
+{
+    ( t = <PROPERTY> {jjtThis.addToken(t.image);} )? 
+        s = <IDENTIFIER>
+        {jjtThis.addToken(s.image);
+        	if(index != -1)
+        	{
+        	  if(type.equals("Comp")) components.get(index).addProperty("Property", s.image);
+        	  else if(type.equals("Conn")) connectors.get(index).addProperty("Property", s.image);
+        	  else if(type.equals("Role")) connectors.get(index).addProperty("RoleProperty", s.image);
+        	  else if(type.equals("Port")) components.get(index).addProperty("PortProperty", s.image);
+        	}}
+        ( ":" PropertyTypeDescription() )? ( "=" PropertyValueDeclaration(type, index) )?
+        | u = <PROPBEGIN> {jjtThis.addToken(u.image);}( parse_PropertyDescription(index, type)  ";" )*  v = <PROPEND> {jjtThis.addToken(v.image);} ";"
+}
+
+void PropertyTypeDeclaration():{Token t, s, u, v, w, x;}
+{
+    t = <PROPERTY> {jjtThis.addToken(t.image);} s = <TYPE> {jjtThis.addToken(s.image);}  u = <IDENTIFIER> {jjtThis.addToken(u.image);}
+        ( "=" 
+                ( v = <INT> {jjtThis.addToken(v.image);}
+                | v = <FLOAT> {jjtThis.addToken(v.image);}
+                | v = <STRING> {jjtThis.addToken(v.image);}
+                | v = <BOOLEAN> {jjtThis.addToken(v.image);}
+                | v = <ENUM> ( "{" w = <IDENTIFIER> {jjtThis.addToken(w.image);}( "," x = <IDENTIFIER> {jjtThis.addToken(x.image);})* "}" )? 
+                | v = <SET> {jjtThis.addToken(v.image);}( "{" (PropertyTypeDescription())* "}" )
+                | v = <SEQUENCE> {jjtThis.addToken(v.image);}( "<" (PropertyTypeDescription())* ">" )
+                | v = <RECORD> {jjtThis.addToken(v.image);} "[" ( parse_RecordFieldDescription() ";")* "]"
+                | v = <IDENTIFIER> {jjtThis.addToken(v.image);})  
+        ";")
+}
+
+void PropertyTypeDescription():{Token s, u, v;}
+{
+    s = <ANY> {jjtThis.addToken(s.image);}
+        | s = <INT> {jjtThis.addToken(s.image);}
+        | s = <FLOAT> {jjtThis.addToken(s.image);}     
+        | s = <STRING> {jjtThis.addToken(s.image);}
+        | s = <BOOLEAN> {jjtThis.addToken(s.image);}
+        | s = <SET> {jjtThis.addToken(s.image);}  "{" ( LOOKAHEAD(2) (PropertyTypeDescription())* | (( u = <ELEMENT> {jjtThis.addToken(u.image);}| u = <SYSTEM> {jjtThis.addToken(u.image);}| u = <COMPONENT> {jjtThis.addToken(u.image);}| u = <CONNECTOR> {jjtThis.addToken(u.image);}| u = <PORT> {jjtThis.addToken(u.image);}| u = <ROLE> {jjtThis.addToken(u.image);}| u = <TYPE> {jjtThis.addToken(u.image);}| u = <PROPERTY> {jjtThis.addToken(u.image);}| u = <REPRESENTATION> {jjtThis.addToken(u.image);}) )) "}" 
+        | s = <SEQUENCE> {jjtThis.addToken(s.image);} ( "<" ( PropertyTypeDescription() )* ">" ) ?
+        | s = <RECORD> {jjtThis.addToken(s.image);} "[" ( parse_RecordFieldDescription() ";" )* "]"
+        | s = <ENUM> {jjtThis.addToken(s.image);} ( "{" (u = <IDENTIFIER> {jjtThis.addToken(u.image);} ( "," v = <IDENTIFIER> {jjtThis.addToken(v.image);})*)* "}" )    
+        | lookup_TypeByName()
+}
+
+void parse_RecordFieldDescription():{Token t, s;}
+{
+    t = <IDENTIFIER> {jjtThis.addToken(t.image);} ( "," s = <IDENTIFIER> {jjtThis.addToken(s.image);})* ( ":" PropertyTypeDescription())?
+}    
+    
+void  PropertyValueDeclaration(String type, int index):{Token t;}
+{
+    t = <INTEGER_LITERAL> {jjtThis.addToken(t.image); if(index != -1) {if(type.equals("Comp")) components.get(index).addValue(t.image); else connectors.get(index).addValue(t.image);}}
+    | t = <FLOATING_POINT_LITERAL> {jjtThis.addToken(t.image); if(index != -1) {if(type.equals("Comp")) components.get(index).addValue(t.image); else connectors.get(index).addValue(t.image);}}
+    | t = <STRING_LITERAL> {jjtThis.addToken(t.image); if(index != -1) {if(type.equals("Comp")) components.get(index).addValue(t.image); else connectors.get(index).addValue(t.image);}}
+    | t = <FALSE> {jjtThis.addToken(t.image); if(index != -1) {if(type.equals("Comp")) components.get(index).addValue(t.image); else connectors.get(index).addValue(t.image);}}
+    | t = <TRUE> {jjtThis.addToken(t.image); if(index != -1) {if(type.equals("Comp")) components.get(index).addValue(t.image); else connectors.get(index).addValue(t.image);}}
+    | AcmeSetValue(type, index)        
+    | AcmeSequenceValue(type, index)        
+    | AcmeRecordValue(type, index)        
+    | t = <IDENTIFIER> {jjtThis.addToken(t.image); if(index != -1) {if(type.equals("Comp")) components.get(index).addValue(t.image); else connectors.get(index).addValue(t.image);}}
+}     
+    
+void AcmeSetValue(String type, int index):{}
+{
+    "{" (PropertyValueDeclaration(type, index) ( "," PropertyValueDeclaration(type, index) )* )* "}"
+}
+    
+void AcmeSequenceValue(String type, int index):{}
+{
+    "<" (PropertyValueDeclaration(type, index) ( "," PropertyValueDeclaration(type, index) )* )* ">"
+}     
+    
+void AcmeRecordValue(String type, int index):{}
+{
+    "[" ( RecordFieldValue(type, index) ";" )* "]"
+}        
+    
+void RecordFieldValue(String type, int index):{Token t;}
+{
+    t = <IDENTIFIER> {jjtThis.addToken(t.image);} ( ":" PropertyTypeDescription() )? "=" PropertyValueDeclaration(type, index)
+}      
+    
+void RepresentationDeclaration():{Token t, s;}
+{
+    t = <REPRESENTATION> {jjtThis.addToken(t.image);} ( s = <IDENTIFIER> {jjtThis.addToken(s.image);} "=" )? "{" SystemDeclaration() ( BindingsMapDeclaration())? "}" ";"      
+}
+    
+void BindingsMapDeclaration():{Token t;}
+{
+    t = <BINDINGS> {jjtThis.addToken(t.image);} "{" ( BindingDeclaration() )* "}" ( ";" )?
+}       
+    
+void BindingDeclaration():{Token t, s, u, v, w;}
+{
+    ( t = <IDENTIFIER> {jjtThis.addToken(t.image);} ("."  s = <IDENTIFIER> {jjtThis.addToken(s.image);} )? ) u = <TO> {jjtThis.addToken(u.image);} ( v = <IDENTIFIER> {jjtThis.addToken(v.image);} ("."  w = <IDENTIFIER> {jjtThis.addToken(w.image);})? ) 
+        ( "{" ( PropertyDeclaration(-1, "") | PropertiesBlock(-1, "") )* "}" )? ";"
+}     
+    
+void DesignAnalysisDeclaration():{Token t, s, u, v, w;}
+{
+    ( ( t = <EXTERNAL> {jjtThis.addToken(t.image);} ( s = <DESIGN> {jjtThis.addToken(s.image);} )? u = <ANALYSIS> {jjtThis.addToken(u.image);} v = <IDENTIFIER> {jjtThis.addToken(v.image); table.addSymbol(u.image, v.image); }"(" FormalParams() ")" ":" ( PropertyTypeDescription()       
+    | w = <COMPONENT> {jjtThis.addToken(w.image);}
+    | w = <GROUP> {jjtThis.addToken(w.image);}
+    | w = <CONNECTOR> {jjtThis.addToken(w.image);}
+    | w = <PORT> {jjtThis.addToken(w.image);}
+    | w = <ROLE> {jjtThis.addToken(w.image);}
+    | w = <SYSTEM>{jjtThis.addToken(w.image);}
+    | w = <ELEMENT> {jjtThis.addToken(w.image);}
+    | w = <TYPE> {jjtThis.addToken(w.image);}  ) "=" JavaMethodCallExpr() ";" ) 
+    | ( ( t = <DESIGN> {jjtThis.addToken(t.image);})? s = <ANALYSIS> {jjtThis.addToken(s.image);} u = <IDENTIFIER> {jjtThis.addToken(u.image);} "(" FormalParams() ")" ":" ( PropertyTypeDescription() 
+    | v = <COMPONENT> {jjtThis.addToken(v.image);}
+    | v = <GROUP> {jjtThis.addToken(v.image);}
+    | v = <CONNECTOR> {jjtThis.addToken(v.image);}
+    | v = <PORT> {jjtThis.addToken(v.image);}
+    | v = <ROLE> {jjtThis.addToken(v.image);}
+    | v = <SYSTEM> {jjtThis.addToken(v.image);}
+    | v = <ELEMENT> {jjtThis.addToken(v.image);}
+    | v = <TYPE> {jjtThis.addToken(v.image);}) "=" DesignRuleExpression() ";" | ( t = <INVARIANT> {jjtThis.addToken(t.image);}
+        | t = <HEURISTIC> {jjtThis.addToken(t.image);}) DesignRuleExpression() ( s = <PROPBEGIN> {jjtThis.addToken(s.image);} (parse_PropertyDescription(-1, "") ";")* u = <PROPEND> {jjtThis.addToken(u.image);})? ";" ) )
+}     
+    
+void parse_DesignRule():{Token t, s, u, v;}
+{
+   ( t = <DESIGN> {jjtThis.addToken(t.image);} )? ( s = <INVARIANT> {jjtThis.addToken(s.image);}
+        | s = <HEURISTIC> {jjtThis.addToken(s.image);}) DesignRuleExpression() ( u = <PROPBEGIN> {jjtThis.addToken(u.image);}(parse_PropertyDescription(-1, "") ";")* v = <PROPEND> {jjtThis.addToken(v.image);})? ";"
+}       
+    
+void DesignRuleExpression():{}
+{
+    QuantifiedExpression()        
+    | BooleanExpression()
+}   
+    
+void QuantifiedExpression():{Token t, s, u, v, w;}
+{
+    ( ( t = <FORALL> {jjtThis.addToken(t.image);} |  t = <EXISTS> {jjtThis.addToken(t.image);}  ( s = <UNIQUE> {jjtThis.addToken(s.image);})? )
+    u = <IDENTIFIER> {jjtThis.addToken(u.image); table.addSymbol(t.image, u.image);} 
+    ( ( ":" | v = <SET_DECLARE>{jjtThis.addToken(v.image);} ) ( LOOKAHEAD(3) Type() | lookup_arbitraryTypeByName()) )? 
+    w = <IN> {jjtThis.addToken(w.image);} ( SetExpression() | Reference()) "|" DesignRuleExpression())
+}     
+    
+void BooleanExpression() :{Token t;}
+{
+    OrExpression() ( t = <AND> {jjtThis.addToken(t.image);}  OrExpression())*
+}             
+    
+void OrExpression() :{Token t;}
+{
+    ImpliesExpression() ( t = <OR> {jjtThis.addToken(t.image);}  ImpliesExpression())*
+}
+    
+void ImpliesExpression() :{Token t;}
+{
+    IffExpression() ( t = <IMPLIES> {jjtThis.addToken(t.image);}  IffExpression() )*
+}     
+    
+void IffExpression():{Token t;}
+{
+    EqualityExpression() ( t = <IFF> {jjtThis.addToken(t.image);}  EqualityExpression() )*
+}
+   
+void EqualityExpression() :{Token t;}
+{
+    RelationalExpression() ( t = <EQ> {jjtThis.addToken(t.image);}  RelationalExpression() | t = <NE> {jjtThis.addToken(t.image);}  RelationalExpression() )*
+}       
+
+void RelationalExpression() :{Token t;}
+{
+    AdditiveExpression() ( "<" AdditiveExpression() | ">" AdditiveExpression() | t = <LE>  {jjtThis.addToken(t.image);} AdditiveExpression() | t = <GE> {jjtThis.addToken(t.image);}  AdditiveExpression() )*        
+}
+
+void AdditiveExpression():{Token t;}
+{
+    MultiplicativeExpression() ( t = <PLUS> {jjtThis.addToken(t.image);}  MultiplicativeExpression() | t = <MINUS> {jjtThis.addToken(t.image);}  MultiplicativeExpression())*
+}    
+    
+void MultiplicativeExpression():{Token t;}
+{
+    UnaryExpression()( t = <STAR> {jjtThis.addToken(t.image);}  UnaryExpression() | t = <SLASH> {jjtThis.addToken(t.image);}  UnaryExpression() | t = <REM> {jjtThis.addToken(t.image);}  UnaryExpression() )* 
+}   
+    
+void UnaryExpression():{Token t;}
+{
+    t = <BANG> {jjtThis.addToken(t.image);}  UnaryExpression()        
+    | t = <MINUS> {jjtThis.addToken(t.image);}  UnaryExpression()        
+    | PrimitiveExpression()
+}
+    
+void PrimitiveExpression():{}
+{
+    "(" DesignRuleExpression() ")"        
+    | LiteralConstant()        
+    | Reference()        
+    | SetExpression()
+}    
+    
+void Reference():{Token t, s;}
+{
+    t = <IDENTIFIER>  {jjtThis.addToken(t.image);} 
+    ( "."
+    ( s = <IDENTIFIER> {jjtThis.addToken(s.image);} 
+    | s = <TYPE> {jjtThis.addToken(s.image);} 
+    | s = <COMPONENTS> {jjtThis.addToken(s.image);} 
+    | s = <CONNECTORS>  {jjtThis.addToken(s.image);} 
+    | s = <PORTS> {jjtThis.addToken(s.image);} 
+    | s = <ROLES> {jjtThis.addToken(s.image);} 
+    | s = <MEMBERS> {jjtThis.addToken(s.image);} 
+    | s = <PROPERTIES> {jjtThis.addToken(s.image);} 
+    | s = <REPRESENTATIONS> {jjtThis.addToken(s.image);} 
+    | s = <ATTACHEDPORTS> {jjtThis.addToken(s.image);} 
+    | s = <ATTACHEDROLES> {jjtThis.addToken(s.image);}  ) )*
+     ( "(" ActualParams()        ")" )?
+}      
+    
+void JavaMethodCallExpr():{Token t, s;}
+{
+    t = <IDENTIFIER> {jjtThis.addToken(t.image);} ( "." s = <IDENTIFIER> {jjtThis.addToken(s.image);} )* "(" ActualParams() ")"
+}
+
+void LiteralConstant():{Token t;}
+{
+    ( t = <INTEGER_LITERAL> {jjtThis.addToken(t.image);}   )
+    | ( t = <FLOATING_POINT_LITERAL> {jjtThis.addToken(t.image);}   )
+    | ( t = <STRING_LITERAL> {jjtThis.addToken(t.image);}   )
+    | ( t = <TRUE> {jjtThis.addToken(t.image);}   )
+    | ( t = <FALSE> {jjtThis.addToken(t.image);}   )
+    | ( t = <COMPONENT> {jjtThis.addToken(t.image);}   )
+    | ( t = <GROUP> {jjtThis.addToken(t.image);}   )
+    | ( t = <CONNECTOR> {jjtThis.addToken(t.image);}   )
+    | ( t = <PORT> {jjtThis.addToken(t.image);}   )
+    | ( t = <ROLE> {jjtThis.addToken(t.image);}   )
+    | ( t = <SYSTEM>  {jjtThis.addToken(t.image);}   )
+    | ( t = <ELEMENT> {jjtThis.addToken(t.image);}   )
+    | ( t = <PROPERTY> {jjtThis.addToken(t.image);}   )
+    | ( t = <INT>  {jjtThis.addToken(t.image);}   )
+    | ( t = <FLOAT> {jjtThis.addToken(t.image);}   )
+    | ( t = <STRING> {jjtThis.addToken(t.image);}   )
+    | ( t = <BOOLEAN>  {jjtThis.addToken(t.image);}   )
+    | ( t = <ENUM> {jjtThis.addToken(t.image);}   )
+    | ( t = <SET> {jjtThis.addToken(t.image);}   )
+    | ( t = <SEQUENCE> {jjtThis.addToken(t.image);}   )
+    | ( t = <RECORD> {jjtThis.addToken(t.image);}   )
+}
+   
+void ActualParams() :{}
+{
+    ( ActualParam() ( "," ActualParam() )* )?
+}        
+    
+void FormalParams() :{}
+{
+    ( FormalParam() ( "," FormalParam() )* )?
+}        
+    
+void ActualParam() :{}
+{
+        DesignRuleExpression()
+}        
+    
+void FormalParam() :{Token t, s, u;}
+{
+    t = <IDENTIFIER> {jjtThis.addToken(t.image);}  ( "," s = <IDENTIFIER> {jjtThis.addToken(s.image);}  )* ":" ( u = <ELEMENT> {jjtThis.addToken(u.image);}  | u = <SYSTEM> {jjtThis.addToken(u.image);}  | u = <COMPONENT> {jjtThis.addToken(u.image);}  | u = <CONNECTOR> {jjtThis.addToken(u.image);}  | u = <PORT> {jjtThis.addToken(u.image);} | u = <ROLE> {jjtThis.addToken(u.image);}  | u = <TYPE> {jjtThis.addToken(u.image);} | u = <PROPERTY> {jjtThis.addToken(u.image);}  | u = <REPRESENTATION> {jjtThis.addToken(u.image);}  | PropertyTypeDescription() )
+}            
+     
+void SetExpression() :{}
+{
+      "{" (LiteralSet() | SetConstructor()) "}"
+}   
+    
+void LiteralSet() :{}
+{
+        ( LiteralConstant() | Reference() ) ( "," ( LiteralConstant() | Reference() ) )*         
+}
+    
+void SetConstructor() :{Token t, s, u, v;}
+{
+    ((t = <SELECT> {jjtThis.addToken(t.image);}  s = <IDENTIFIER> {jjtThis.addToken(s.image); table.addSymbol(s.image, t.image); }
+    (":" lookup_arbitraryTypeByName())? u = <IN> {jjtThis.addToken(u.image);}  ( SetExpression() | Reference()) "|" DesignRuleExpression()) 
+    | (t = <COLLECT> {jjtThis.addToken(t.image);}  s = <IDENTIFIER> {jjtThis.addToken(s.image); table.addSymbol(s.image, t.image); }
+     "." u = <IDENTIFIER> {jjtThis.addToken(u.image);}  ":" lookup_arbitraryTypeByName() "." lookup_arbitraryTypeByName() v = <IN> {jjtThis.addToken(v.image);}  ( SetExpression() | Reference() )) 
+    )
+} 
+    
+void RecordType() :{Token t;}
+{
+    t = <RECORD> {jjtThis.addToken (t.image);}  "[" RecordItem() ( "," RecordItem())* "]"
+}           
+
+void RecordItem() :{Token t;}
+{
+    t = <IDENTIFIER> {jjtThis.addToken(t.image);}  ":" Type()
+}
+    
+void SetType() :{Token t;}
+{
+    t = <SET> {jjtThis.addToken(t.image);}  "{" Type() "}"
+}           
+    
+void SequenceType() :{Token t;}
+{
+    t = <SEQUENCE> {jjtThis.addToken(t.image);}  "{" Type() "}"
+}       
+    
+void Signature() :{}
+{
+    Type() "<->" Type()
+}
+    
+void Type() :{Token t, s;}
+{
+    ( t = <IDENTIFIER> {jjtThis.addToken(t.image);}  ( "." s = <IDENTIFIER> {jjtThis.addToken (s.image);} )* )
+}     
+    
+void PrimitiveType() :{Token t;}
+{
+    t = <COMPONENT> {jjtThis.addToken(t.image);}  | t = <GROUP> {jjtThis.addToken(t.image);}  | t = <CONNECTOR> {jjtThis.addToken(t.image);}  | t = <PORT> {jjtThis.addToken(t.image);}  | t = <ROLE> {jjtThis.addToken(t.image);}  | t = <SYSTEM> {jjtThis.addToken(t.image);} 
+}   
+    
+void Element() :{Token t, s;}
+{
+    ( t = <IDENTIFIER> {jjtThis.addToken(t.image);}  ( "." s = <IDENTIFIER> {jjtThis.addToken(s.image);}  )* ) | CompoundElement()
+}         
+    
+void CompoundElement() :{}
+{
+    Set() | Record() | Sequence()     
+}
+    
+void Set() :{}
+{
+        "{" Element() ( "," Element())* "}"
+}       
+
+void Record() :{Token t, s;}
+{
+    "[" t = <IDENTIFIER> {jjtThis.addToken(t.image);}  "=" Element()( "," s = <IDENTIFIER> {jjtThis.addToken(s.image);}  "=" Element())* "]"  
+}
+
+void Sequence() :{}
+{
+	"<" Element() ( "," Element())* ">"
+}

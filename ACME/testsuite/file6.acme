@@ -1,0 +1,3 @@
+Connector Type rpc  = { 
+	Roles { name : caller, callee;};
+	Property protocol : Wright = "..."; };

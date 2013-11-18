@@ -1,0 +1,61 @@
+Family TieredFam = {
+
+    Port Type remoteUseT extends useT with {
+        Property isRemote : boolean = true;
+		property x;
+    };
+    Port Type localUseT extends useT with {
+        Property isRemote : boolean = false;
+    };
+    Role Type localUserT extends userT with {
+        Property isRemote : boolean = false;
+    };
+    Connector Type LocalConnT extends CallReturnConnT with {
+        Role callee : providerT = new providerT extended with {
+        };
+        Role caller : userT = new userT extended with {
+        };
+
+    };
+    Role Type localProviderT extends providerT with {
+        Property isRemote : boolean = false;
+
+    };
+    Port Type remoteProvideT extends provideT with {
+        Property isRemote : boolean = true;
+    };
+    Role Type remoteProviderT extends providerT with {
+        Property isRemote : boolean = true;
+
+    };
+    Connector Type RMIConnT extends CallReturnConnT with {
+        Role callee : remoteProviderT = new remoteProviderT extended with {
+            Property isRemote : boolean = true;
+        };
+        Role caller : remoteUserT = new remoteUserT extended with {
+            Property isRemote : boolean = true;
+        }
+
+    }
+    Role Type remoteUserT extends userT with {
+        Property isRemote : boolean = true;
+
+    }
+    Component Type ClientNodeT extends TierNodeT with {
+
+    }
+    Component Type TierNodeT = {
+        Property host : string;
+        Property allowShareHost : boolean <<  default : boolean = true; >> ;
+    }
+    Component Type DataNodeT extends TierNodeT with {
+
+    }
+    Connector Type CallReturnConnT = {
+        Property blocking : boolean <<  default : boolean = true; >> ;
+    }
+    Port Type localProvideT extends provideT with {
+        Property isRemote : boolean = false;
+    }
+}
+

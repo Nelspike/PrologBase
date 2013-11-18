@@ -1,0 +1,30 @@
+import PipesAndFiltersFam;
+ 
+System simple-demo : PipesAndFiltersFam = new PipesAndFiltersFam extended with {
+
+    Component Package : Filter = new Filter extended with {
+        Port output : outputT = new outputT;
+        Port input : inputT = new inputT;
+    };
+	
+    Component Compress : BinaryFilter = new BinaryFilter extended with {
+        Property binary : string = "gzip";
+        Port output : outputT = new outputT;
+        Port input : inputT = new inputT;
+    };
+	
+    Connector Pipe10 : Pipe = new Pipe extended with {
+        Property bufferSize : int = 0;
+        Role source : sourceT = new sourceT extended with {
+            Property protocol : string = "char source";
+        };
+        Role sink : sinkT = new sinkT extended with {
+            Property protocol : string = "char sink";
+        };
+
+    };
+	
+    Attachment Package.input to Pipe10.source;
+    Attachment Compress.output to Pipe10.sink;
+}
+

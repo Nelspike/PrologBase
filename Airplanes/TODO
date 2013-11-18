@@ -1,0 +1,13 @@
+NOTA: Estou a usar um ficheiro de voos reduzidos para dar para ver alguma coisa
+
+Feito:
+	- Voos
+	- Avioes
+	- Sistema de datas
+	- Desenho de grafos
+	- Transformação dos voos num grafo (cada voo é uma aresta)
+
+Coisas a fazer:
+	- Calcular caminhos mais curtos
+	- Mostrar grafo apenas com caminhos mais curtos
+	- Tudo o resto
